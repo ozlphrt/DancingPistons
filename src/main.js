@@ -32,17 +32,20 @@ class DancingPistonsApp {
         this.materialManager = new MaterialManager();
         this.sound = new SoundEffects();
 
-        // 24 rings = 1,801 hexagonal pistons (10X denser grid)
+        this.isMouseMoving = false;
+        this.lastMouseMoveTime = 0;
+
+        // 77 rings = 18,019 hexagonal pistons (10X denser grid)
         this.pistonField = new PistonField(
             this.sceneManager.scene,
             this.materialManager,
             this.sound,
             {
-                hexRadius: 0.42,
-                hexGap: 0.03,
-                rings: 24,
-                cursorRadius: 3.4,
-                waveHeight: 1.8,
+                hexRadius: 0.134,
+                hexGap: 0.012,
+                rings: 77,
+                cursorRadius: 3.0,
+                waveHeight: 1.2,
                 motionMode: 'interactive'
             }
         );
@@ -71,6 +74,8 @@ class DancingPistonsApp {
         };
 
         window.addEventListener('mousemove', (e) => {
+            this.isMouseMoving = true;
+            this.lastMouseMoveTime = performance.now();
             updateCoords(e.clientX, e.clientY);
         });
 
@@ -234,6 +239,12 @@ class DancingPistonsApp {
 
         const dt = this.clock.getDelta();
         const elapsedTime = this.clock.getElapsedTime();
+
+        // Gated mouse moving check (stops sound if mouse pauses for > 60ms)
+        if (performance.now() - this.lastMouseMoveTime > 60) {
+            this.isMouseMoving = false;
+        }
+        this.pistonField.isMouseMoving = this.isMouseMoving;
 
         this.pistonField.update(elapsedTime, dt);
         this.sceneManager.render();

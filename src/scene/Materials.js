@@ -153,12 +153,19 @@ export class MaterialManager {
     }
 
     /**
+     * Retrieves the 256-entry active gradient LUT array for zero-overhead loop access.
+     */
+    getActiveLut() {
+        return this.luts.get(this.currentPaletteKey) || this.luts.get('turbo');
+    }
+
+    /**
      * Samples color from the active height gradient LUT.
      * @param {number} normalizedHeight - Value from 0.0 to 1.0
      * @returns {THREE.Color}
      */
     sampleHeightColor(normalizedHeight) {
-        const lut = this.luts.get(this.currentPaletteKey) || this.luts.get('turbo');
+        const lut = this.getActiveLut();
         const idx = Math.max(0, Math.min(255, Math.floor(normalizedHeight * 255)));
         return lut[idx];
     }
