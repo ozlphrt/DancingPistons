@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dancing Pistons 3D | Shiny Plastic Hexagonal Field</title>
+    <meta name="description" content="Interactive 3D hexagonal pistons made of shiny plastic tiles with dynamic mouse wave reactions, studio lighting, and tactile ASMR audio.">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2338bdf8'><polygon points='12,2 21,7 21,17 12,22 3,17 3,7'/></svg>">
+    <link rel="stylesheet" href="/src/style.css">
+</head>
+<body>
+    <div id="canvas-container"></div>
+
+    <div class="ui-overlay">
+        <!-- Top Bar -->
+        <header class="top-bar">
+            <div class="brand interactive">
+                <div class="brand-icon">⬡</div>
+                <span class="brand-title">Dancing Pistons</span>
+                <span class="brand-badge">3D Hex</span>
+            </div>
+
+            <!-- Dance Motion Mode Selector -->
+            <nav class="mode-bar interactive" id="mode-bar" aria-label="Motion Modes">
+                <button class="mode-btn active" data-mode="interactive" id="mode-interactive">
+                    <span>🖱️</span> Interactive
+                </button>
+                <button class="mode-btn" data-mode="sine_wave" id="mode-sine">
+                    <span>🌊</span> Hex Wave
+                </button>
+                <button class="mode-btn" data-mode="vortex" id="mode-vortex">
+                    <span>🌀</span> Vortex
+                </button>
+                <button class="mode-btn" data-mode="perlin_liquid" id="mode-liquid">
+                    <span>🫧</span> Fluid
+                </button>
+                <button class="mode-btn" data-mode="breathing_heart" id="mode-heart">
+                    <span>💓</span> Pulse
+                </button>
+            </nav>
+
+            <!-- Top Actions -->
+            <div class="top-actions interactive">
+                <button class="glass-btn" id="audio-toggle-btn" title="Toggle Tactile ASMR Sound">
+                    <span id="audio-icon">🔊</span>
+                    <span id="audio-label">Crisp Ceramic ASMR</span>
+                </button>
+                <button class="glass-btn" id="camera-reset-btn" title="Reset Camera Perspective">
+                    <span>🎥</span> Reset View
+                </button>
+            </div>
+        </header>
+
+        <!-- Bottom Controls & Hints -->
+        <footer class="bottom-bar">
+            <!-- Settings Panel -->
+            <div class="glass-panel interactive">
+                <div class="panel-header">
+                    <span class="panel-title">Tile & Dynamics</span>
+                    <span class="brand-badge" id="current-palette-name">Domino White</span>
+                </div>
+
+                <!-- Color Palettes -->
+                <div class="control-group">
+                    <div class="control-label-row">
+                        <span>Resin Palette</span>
+                    </div>
+                    <div class="palette-picker" id="palette-picker">
+                        <button class="palette-chip active" data-palette="domino" style="background: #ffffff;" title="Domino Pearl White"></button>
+                        <button class="palette-chip" data-palette="sapphire" style="background: #1e3a8a;" title="Royal Sapphire"></button>
+                        <button class="palette-chip" data-palette="emerald" style="background: #064e3b;" title="Emerald Jade"></button>
+                        <button class="palette-chip" data-palette="obsidian" style="background: #18181b;" title="Obsidian Ceramic"></button>
+                        <button class="palette-chip" data-palette="amber" style="background: #d97706;" title="Solar Amber"></button>
+                        <button class="palette-chip" data-palette="cyberpunk" style="background: linear-gradient(135deg, #ec4899, #06b6d4);" title="Cyber Prismatic"></button>
+                    </div>
+                </div>
+
+                <!-- Wave Height Slider -->
+                <div class="control-group">
+                    <div class="control-label-row">
+                        <span>Wave Amplitude</span>
+                        <span class="control-val" id="val-wave-height">1.8</span>
+                    </div>
+                    <input type="range" id="slider-wave-height" min="0.5" max="3.5" step="0.1" value="1.8">
+                </div>
+
+                <!-- Cursor Reach Slider -->
+                <div class="control-group">
+                    <div class="control-label-row">
+                        <span>Cursor Reach</span>
+                        <span class="control-val" id="val-cursor-radius">3.8</span>
+                    </div>
+                    <input type="range" id="slider-cursor-radius" min="1.5" max="7.0" step="0.2" value="3.8">
+                </div>
+
+                <!-- Spring Stiffness Slider -->
+                <div class="control-group">
+                    <div class="control-label-row">
+                        <span>Spring Bounce</span>
+                        <span class="control-val" id="val-stiffness">180</span>
+                    </div>
+                    <input type="range" id="slider-stiffness" min="60" max="300" step="10" value="180">
+                </div>
+            </div>
+
+            <!-- Information & Interaction Hints -->
+            <div class="info-col">
+                <div class="hint-badge interactive">
+                    <span>Hover <span class="hint-key">Mouse</span> to lift pistons</span>
+                    <span>•</span>
+                    <span><span class="hint-key">Click / Tap</span> for shockwaves</span>
+                    <span>•</span>
+                    <span><span class="hint-key">Right-Click / Drag</span> to orbit 3D</span>
+                </div>
+
+                <div class="stats-card interactive">
+                    <div class="stat-item">Pistons: <span id="stat-piston-count">169</span></div>
+                    <div class="stat-item">FPS: <span id="stat-fps">60</span></div>
+                    <div class="stat-item">Material: <span>Physical Clearcoat</span></div>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+</body>
+</html>
