@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { HexGrid } from './HexGrid.js';
-import { HexPiston, createBeveledHexGeometry } from './HexPiston.js';
+import { createHexPrismGeometry } from './HexPiston.js';
 
 export class PistonField {
     /**
@@ -14,102 +14,113 @@ export class PistonField {
         this.materialManager = materialManager;
         this.sound = soundEffects;
 
-        this.hexRadius = options.hexRadius || 0.95;
-        this.hexGap = options.hexGap || 0.08;
-        this.rings = options.rings || 7; // 169 pistons
-        this.cursorRadius = options.cursorRadius || 3.8;
+        // Configuration for 10X denser grid (~1,801 pistons)
+        this.hexRadius = options.hexRadius || 0.42;
+        this.hexGap = options.hexGap || 0.03;
+        this.rings = options.rings || 24; // 1,801 pistons!
+        this.cursorRadius = options.cursorRadius || 3.4;
         this.waveHeight = options.waveHeight || 1.8;
-        this.motionMode = options.motionMode || 'interactive'; // 'interactive', 'sine_wave', 'vortex', 'perlin_liquid', 'breathing_heart'
+        this.motionMode = options.motionMode || 'interactive';
 
-        this.pistons = [];
-        this.interactiveMeshes = [];
-        this.ripples = []; // Active ripple shocks from clicks
+        this.stiffness = 180.0;
+        this.damping = 14.0;
+        this.mass = 1.0;
 
-        // Mouse interaction state
+        // Interaction state
         this.cursorWorld = new THREE.Vector3(9999, 0, 9999);
         this.lastCursorWorld = new THREE.Vector3(9999, 0, 9999);
         this.cursorVelocity = new THREE.Vector3(0, 0, 0);
         this.isCursorOnField = false;
 
-        // Ground plane for continuous smooth raycasting
+        this.ripples = [];
         this.raycastPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
         this.raycaster = new THREE.Raycaster();
 
         this.fieldGroup = new THREE.Group();
         this.scene.add(this.fieldGroup);
 
-        this._initGeometries();
+        this.dummy = new THREE.Object3D();
+
         this._buildField();
         this._buildBasePlate();
-    }
-
-    _initGeometries() {
-        // Shared beveled hexagonal tile cap
-        this.tileGeometry = createBeveledHexGeometry(this.hexRadius - this.hexGap / 2, 0.36, 0.06);
-
-        // Shared cylinder shaft (machined piston rod)
-        const shaftRadius = (this.hexRadius - this.hexGap) * 0.52;
-        const shaftHeight = 3.2;
-        this.shaftGeometry = new THREE.CylinderGeometry(shaftRadius, shaftRadius, shaftHeight, 24);
-
-        // Shared socket ring
-        const socketRadius = this.hexRadius - this.hexGap / 2 + 0.02;
-        this.socketGeometry = new THREE.CylinderGeometry(socketRadius, socketRadius, 0.12, 6);
-        this.socketGeometry.rotateY(Math.PI / 6); // align with pointy hex
     }
 
     _buildField() {
         const grid = new HexGrid(this.hexRadius, this.hexGap);
         const cells = grid.generateGrid(this.rings);
+        this.count = cells.length; // Exactly 1,801
 
-        this.pistons = cells.map(cell => {
-            const piston = new HexPiston({
-                q: cell.q,
-                r: cell.r,
-                x: cell.x,
-                z: cell.z,
-                dist: cell.dist,
-                radius: this.hexRadius,
-                tileGeometry: this.tileGeometry,
-                shaftGeometry: this.shaftGeometry,
-                socketGeometry: this.socketGeometry,
-                materials: this.materialManager
-            });
+        // Preallocate compact typed arrays for spring physics simulation
+        this.posX = new Float32Array(this.count);
+        this.posZ = new Float32Array(this.count);
+        this.dist = new Float32Array(this.count);
+        this.posY = new Float32Array(this.count);
+        this.targetY = new Float32Array(this.count);
+        this.velocity = new Float32Array(this.count);
 
-            this.fieldGroup.add(piston.group);
-            this.interactiveMeshes.push(piston.tileMesh);
-            return piston;
-        });
+        for (let i = 0; i < this.count; i++) {
+            this.posX[i] = cells[i].x;
+            this.posZ[i] = cells[i].z;
+            this.dist[i] = cells[i].dist;
+            this.posY[i] = 0.0;
+            this.targetY[i] = 0.0;
+            this.velocity[i] = 0.0;
+        }
+
+        // 3D Hexagonal Prism geometry with beveled top cap & vertex colors
+        this.geometry = createHexPrismGeometry(this.hexRadius - this.hexGap / 2, 2.6, 0.025);
+
+        // High-performance single-draw-call InstancedMesh
+        this.instancedMesh = new THREE.InstancedMesh(
+            this.geometry,
+            this.materialManager.pistonMaterial,
+            this.count
+        );
+
+        this.instancedMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+        this.instancedMesh.castShadow = true;
+        this.instancedMesh.receiveShadow = true;
+
+        // Initialize instance colors
+        const restingColor = this.materialManager.sampleHeightColor(0.0);
+        for (let i = 0; i < this.count; i++) {
+            this.dummy.position.set(this.posX[i], 0, this.posZ[i]);
+            this.dummy.updateMatrix();
+            this.instancedMesh.setMatrixAt(i, this.dummy.matrix);
+            this.instancedMesh.setColorAt(i, restingColor);
+        }
+
+        this.instancedMesh.instanceMatrix.needsUpdate = true;
+        if (this.instancedMesh.instanceColor) {
+            this.instancedMesh.instanceColor.needsUpdate = true;
+        }
+
+        this.fieldGroup.add(this.instancedMesh);
     }
 
     _buildBasePlate() {
-        // Outer beveled hexagonal or circular baseplate surrounding the field
-        const maxDist = this.rings * this.hexRadius * 1.85;
-        const plateGeo = new THREE.CylinderGeometry(maxDist + 1.2, maxDist + 2.0, 0.5, 64);
+        const maxDist = this.rings * this.hexRadius * 1.76;
+        const plateGeo = new THREE.CylinderGeometry(maxDist + 0.8, maxDist + 1.4, 0.4, 64);
         this.basePlateMesh = new THREE.Mesh(plateGeo, this.materialManager.baseMaterial);
-        this.basePlateMesh.position.set(0, -0.32, 0);
+        this.basePlateMesh.position.set(0, -0.22, 0);
         this.basePlateMesh.receiveShadow = true;
         this.fieldGroup.add(this.basePlateMesh);
 
-        // Subtle dark rim ring
-        const rimGeo = new THREE.TorusGeometry(maxDist + 1.25, 0.12, 16, 64);
+        // Sleek outer metallic collar
+        const rimGeo = new THREE.TorusGeometry(maxDist + 0.82, 0.08, 16, 64);
         rimGeo.rotateX(Math.PI / 2);
-        this.rimMesh = new THREE.Mesh(rimGeo, this.materialManager.socketMaterial);
-        this.rimMesh.position.set(0, -0.06, 0);
+        const rimMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.4, metalness: 0.8 });
+        this.rimMesh = new THREE.Mesh(rimGeo, rimMat);
+        this.rimMesh.position.set(0, -0.04, 0);
         this.fieldGroup.add(this.rimMesh);
     }
 
-    /**
-     * Updates cursor world position from mouse raycast
-     * @param {THREE.Camera} camera 
-     * @param {THREE.Vector2} mouseNDC 
-     */
     updateCursor(camera, mouseNDC) {
         this.raycaster.setFromCamera(mouseNDC, camera);
         const intersectionPoint = new THREE.Vector3();
 
         if (this.raycaster.ray.intersectPlane(this.raycastPlane, intersectionPoint)) {
-            const maxFieldRadius = this.rings * this.hexRadius * 1.85;
+            const maxFieldRadius = this.rings * this.hexRadius * 1.8;
             const distFromCenter = Math.hypot(intersectionPoint.x, intersectionPoint.z);
 
             if (distFromCenter <= maxFieldRadius + 2.0) {
@@ -124,19 +135,16 @@ export class PistonField {
         this.cursorWorld.set(9999, 0, 9999);
     }
 
-    /**
-     * Triggers a circular shockwave ripple centered at cursor or clicked piston
-     */
     triggerRipple(power = 1.0) {
         const origin = this.isCursorOnField ? this.cursorWorld.clone() : new THREE.Vector3(0, 0, 0);
         this.ripples.push({
             origin,
             startTime: performance.now() / 1000,
-            amplitude: 2.2 * power,
-            speed: 12.0,       // units per second outward
-            wavelength: 2.2,   // width of wave crest
-            decay: 2.2,        // damping over time
-            maxTime: 2.5
+            amplitude: 2.4 * power,
+            speed: 14.0,       // Fast shockwave across 1,800 pistons
+            wavelength: 1.8,
+            decay: 2.0,
+            maxTime: 2.6
         });
 
         if (this.sound) {
@@ -144,41 +152,36 @@ export class PistonField {
         }
     }
 
-    /**
-     * Physics & Animation Loop Step
-     * @param {number} time - Elapsed time in seconds
-     * @param {number} dt - Delta time in seconds
-     */
     update(time, dt) {
+        const step = Math.min(dt, 0.05);
         const now = time;
-        let highestActiveElevation = 0;
-        let activePistonCount = 0;
-
-        // Clean up expired ripples
-        this.ripples = this.ripples.filter(r => (now - r.startTime) < r.maxTime);
-
-        // Precompute motion pattern parameters
         const isDancing = this.motionMode !== 'interactive';
 
-        for (let i = 0; i < this.pistons.length; i++) {
-            const p = this.pistons[i];
-            let targetY = 0.0;
+        // Clean expired ripples
+        this.ripples = this.ripples.filter(r => (now - r.startTime) < r.maxTime);
 
-            // 1. Mouse Cursor Proximity Wave (Smooth bell curve / cosine)
+        let highestActiveElevation = 0;
+        let elevatedCount = 0;
+        const maxHeight = Math.max(0.1, this.waveHeight * 1.25);
+
+        for (let i = 0; i < this.count; i++) {
+            const px = this.posX[i];
+            const pz = this.posZ[i];
+            const pdist = this.dist[i];
+            let target = 0.0;
+
+            // 1. Mouse Proximity Wave (Smooth bell curve)
             if (this.isCursorOnField) {
-                const distToCursor = Math.hypot(p.x - this.cursorWorld.x, p.z - this.cursorWorld.z);
-                if (distToCursor < this.cursorRadius) {
-                    const normDist = distToCursor / this.cursorRadius;
-                    // Cosine bell curve with smooth dropoff
-                    const factor = 0.5 * (1.0 + Math.cos(Math.PI * normDist));
-                    const mouseHeight = this.waveHeight * factor;
-                    targetY += mouseHeight;
+                const distToMouse = Math.hypot(px - this.cursorWorld.x, pz - this.cursorWorld.z);
+                if (distToMouse < this.cursorRadius) {
+                    const norm = distToMouse / this.cursorRadius;
+                    const factor = 0.5 * (1.0 + Math.cos(Math.PI * norm));
+                    const lift = this.waveHeight * factor;
+                    target += lift;
 
-                    if (factor > 0.35) {
-                        activePistonCount++;
-                        if (mouseHeight > highestActiveElevation) {
-                            highestActiveElevation = mouseHeight;
-                        }
+                    if (factor > 0.3) {
+                        elevatedCount++;
+                        if (lift > highestActiveElevation) highestActiveElevation = lift;
                     }
                 }
             }
@@ -187,84 +190,96 @@ export class PistonField {
             for (let r = 0; r < this.ripples.length; r++) {
                 const rip = this.ripples[r];
                 const age = now - rip.startTime;
-                const dist = Math.hypot(p.x - rip.origin.x, p.z - rip.origin.z);
-                const waveFront = rip.speed * age;
-                const distFromFront = dist - waveFront;
+                const d = Math.hypot(px - rip.origin.x, pz - rip.origin.z);
+                const front = rip.speed * age;
+                const diff = d - front;
 
-                // Wave packet localized around expanding front
-                if (Math.abs(distFromFront) < rip.wavelength * 2.5) {
-                    const decayFactor = Math.exp(-rip.decay * age);
-                    const phase = (distFromFront / rip.wavelength) * Math.PI * 2;
-                    const rippleY = rip.amplitude * decayFactor * Math.cos(phase) * Math.max(0, 1 - Math.abs(distFromFront) / (rip.wavelength * 2.5));
-                    targetY += Math.max(0, rippleY);
+                if (Math.abs(diff) < rip.wavelength * 2.5) {
+                    const decay = Math.exp(-rip.decay * age);
+                    const phase = (diff / rip.wavelength) * Math.PI * 2;
+                    const val = rip.amplitude * decay * Math.cos(phase) * Math.max(0, 1 - Math.abs(diff) / (rip.wavelength * 2.5));
+                    target += Math.max(0, val);
                 }
             }
 
             // 3. Autonomous Dancing Patterns
             if (isDancing) {
                 let danceY = 0;
-                const distFromCenter = p.dist;
-
                 switch (this.motionMode) {
                     case 'sine_wave': {
-                        // Rolling diagonal sine wave
-                        const wave = Math.sin(p.x * 0.45 + p.z * 0.45 - time * 3.5);
-                        danceY = (wave * 0.5 + 0.5) * (this.waveHeight * 0.95);
+                        const wave = Math.sin(px * 0.45 + pz * 0.45 - time * 3.6);
+                        danceY = (wave * 0.5 + 0.5) * this.waveHeight;
                         break;
                     }
                     case 'vortex': {
-                        // Swirling spiral vortex
-                        const angle = Math.atan2(p.z, p.x);
-                        const spiral = Math.sin(angle * 3.0 - time * 3.0 + distFromCenter * 0.6);
-                        danceY = (spiral * 0.5 + 0.5) * (this.waveHeight * 0.9);
+                        const angle = Math.atan2(pz, px);
+                        const spiral = Math.sin(angle * 3.0 - time * 3.2 + pdist * 0.5);
+                        danceY = (spiral * 0.5 + 0.5) * this.waveHeight;
                         break;
                     }
                     case 'perlin_liquid': {
-                        // Multi-frequency undulating liquid surface
-                        const f1 = Math.sin(p.x * 0.35 + time * 2.2) * Math.cos(p.z * 0.35 + time * 1.8);
-                        const f2 = Math.sin(p.x * 0.65 - p.z * 0.5 + time * 3.0) * 0.5;
-                        danceY = ((f1 + f2 + 1.5) / 3.0) * (this.waveHeight * 1.0);
+                        const f1 = Math.sin(px * 0.35 + time * 2.4) * Math.cos(pz * 0.35 + time * 2.0);
+                        const f2 = Math.sin(px * 0.65 - pz * 0.5 + time * 3.2) * 0.5;
+                        danceY = ((f1 + f2 + 1.5) / 3.0) * this.waveHeight;
                         break;
                     }
                     case 'breathing_heart': {
-                        // Concentric expanding heartbeats
-                        const pulse = Math.sin(distFromCenter * 0.75 - time * 4.2);
-                        danceY = Math.pow(Math.max(0, pulse), 2.2) * (this.waveHeight * 1.1);
+                        const pulse = Math.sin(pdist * 0.65 - time * 4.4);
+                        danceY = Math.pow(Math.max(0, pulse), 2.2) * (this.waveHeight * 1.15);
                         break;
                     }
                 }
-
-                targetY += danceY;
+                target += danceY;
             }
 
-            p.setTarget(targetY);
-            p.update(dt);
+            // Physics step (damped spring oscillator)
+            this.targetY[i] = Math.max(0, target);
+            const displacement = this.posY[i] - this.targetY[i];
+            const springForce = -this.stiffness * displacement;
+            const dampingForce = -this.damping * this.velocity[i];
+            const accel = (springForce + dampingForce) / this.mass;
+
+            this.velocity[i] += accel * step;
+            this.posY[i] += this.velocity[i] * step;
+
+            if (this.posY[i] < -0.04) {
+                this.posY[i] = -0.04;
+                this.velocity[i] = Math.max(0, -this.velocity[i] * 0.25);
+            }
+
+            // Update InstancedMesh matrix
+            this.dummy.position.set(px, this.posY[i], pz);
+            this.dummy.updateMatrix();
+            this.instancedMesh.setMatrixAt(i, this.dummy.matrix);
+
+            // Dynamically Color-Code Top of Pistons According to Height
+            const normalizedHeight = Math.min(1.0, Math.max(0.0, this.posY[i] / maxHeight));
+            const heightColor = this.materialManager.sampleHeightColor(normalizedHeight);
+            this.instancedMesh.setColorAt(i, heightColor);
         }
 
-        // Tactile sound effect when cursor actively sweeps over tiles
-        if (this.isCursorOnField && activePistonCount > 0 && this.sound) {
+        this.instancedMesh.instanceMatrix.needsUpdate = true;
+        if (this.instancedMesh.instanceColor) {
+            this.instancedMesh.instanceColor.needsUpdate = true;
+        }
+
+        // Tactile sound trigger on active cursor brush
+        if (this.isCursorOnField && elevatedCount > 0 && this.sound) {
             const speed = this.cursorVelocity.length();
-            if (speed > 0.08) {
+            if (speed > 0.06) {
                 this.sound.playPistonSweep(Math.min(1.0, highestActiveElevation / this.waveHeight));
             }
         }
     }
 
-    /**
-     * Updates material palette across all meshes and baseplates
-     */
     setPalette(paletteKey) {
         this.materialManager.updatePalette(paletteKey);
         const pal = this.materialManager.getCurrentPalette();
-
         if (this.basePlateMesh) {
             this.basePlateMesh.material.color.set(pal.basePlate);
         }
     }
 
-    /**
-     * Sets motion dance preset
-     */
     setMotionMode(mode) {
         this.motionMode = mode;
     }

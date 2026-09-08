@@ -1,216 +1,176 @@
 import * as THREE from 'three';
 
 /**
- * Curated luxury palettes for the shiny plastic hexagonal tiles.
- * Directly referenced and expanded from SUM10's Domino and Gemstone palettes.
+ * Gradient color stops for height-coded coloring of hexagonal pistons.
+ * Directly maps elevation from resting (0.0) to peak (1.0).
  */
-export const PALETTES = {
-    domino: {
-        name: 'Domino Pearl White',
-        tileBase: 0xfafafa,
-        tileEdge: 0xe4e4e7,
-        accent: 0x38bdf8,
-        shaft: 0xd1d5db,
-        basePlate: 0x111827,
-        bg: 0x0a0f1d,
-        rimColor: 0x93c5fd
+export const GRADIENT_PALETTES = {
+    turbo: {
+        name: 'Turbo Spectrum',
+        bg: 0x050811,
+        rimColor: 0x38bdf8,
+        basePlate: 0x070d18,
+        stops: [
+            { pos: 0.00, hex: 0x172554 }, // Deep navy blue (resting)
+            { pos: 0.20, hex: 0x0284c7 }, // Sky blue
+            { pos: 0.40, hex: 0x10b981 }, // Emerald green
+            { pos: 0.65, hex: 0xfacc15 }, // Bright gold
+            { pos: 0.85, hex: 0xf97316 }, // Flame orange
+            { pos: 1.00, hex: 0xffffff }  // Crest white
+        ]
     },
-    sapphire: {
-        name: 'Royal Sapphire',
-        tileBase: 0x1e3a8a,
-        tileEdge: 0x3b82f6,
-        accent: 0x60a5fa,
-        shaft: 0x1e293b,
-        basePlate: 0x090d16,
-        bg: 0x050a14,
-        rimColor: 0x38bdf8
+    plasma: {
+        name: 'Cyber Plasma',
+        bg: 0x070412,
+        rimColor: 0xf472b6,
+        basePlate: 0x0a0518,
+        stops: [
+            { pos: 0.00, hex: 0x1e1b4b }, // Deep violet
+            { pos: 0.25, hex: 0x6366f1 }, // Indigo
+            { pos: 0.50, hex: 0xd946ef }, // Electric magenta
+            { pos: 0.75, hex: 0xf43f5e }, // Rose coral
+            { pos: 1.00, hex: 0xfef08a }  // Sunbeam yellow
+        ]
     },
     emerald: {
         name: 'Emerald Jade',
-        tileBase: 0x064e3b,
-        tileEdge: 0x059669,
-        accent: 0x34d399,
-        shaft: 0x1e293b,
-        basePlate: 0x05130e,
-        bg: 0x030d09,
-        rimColor: 0x6ee7b7
+        bg: 0x020c08,
+        rimColor: 0x6ee7b7,
+        basePlate: 0x03140e,
+        stops: [
+            { pos: 0.00, hex: 0x022c22 }, // Deep forest
+            { pos: 0.25, hex: 0x065f46 }, // Jade green
+            { pos: 0.50, hex: 0x10b981 }, // Vivid emerald
+            { pos: 0.75, hex: 0x6ee7b7 }, // Mint glow
+            { pos: 1.00, hex: 0xfef3c7 }  // Pale ivory
+        ]
     },
-    obsidian: {
-        name: 'Obsidian Ceramic',
-        tileBase: 0x18181b,
-        tileEdge: 0x27272a,
-        accent: 0xa1a1aa,
-        shaft: 0x0f172a,
-        basePlate: 0x09090b,
-        bg: 0x050507,
-        rimColor: 0xe2e8f0
+    sapphire: {
+        name: 'Royal Sapphire',
+        bg: 0x040914,
+        rimColor: 0x38bdf8,
+        basePlate: 0x070e1c,
+        stops: [
+            { pos: 0.00, hex: 0x08152c }, // Midnight abyss
+            { pos: 0.25, hex: 0x1e3a8a }, // Royal blue
+            { pos: 0.50, hex: 0x2563eb }, // Azure blue
+            { pos: 0.75, hex: 0x38bdf8 }, // Electric cyan
+            { pos: 1.00, hex: 0xf0f9ff }  // Pure ice
+        ]
     },
-    amber: {
-        name: 'Solar Amber',
-        tileBase: 0x78350f,
-        tileEdge: 0xd97706,
-        accent: 0xfbbf24,
-        shaft: 0x292524,
-        basePlate: 0x1c1008,
-        bg: 0x120a05,
-        rimColor: 0xfef08a
+    magma: {
+        name: 'Solar Magma',
+        bg: 0x0c0604,
+        rimColor: 0xfde047,
+        basePlate: 0x140a06,
+        stops: [
+            { pos: 0.00, hex: 0x1c0a06 }, // Obsidian crust
+            { pos: 0.25, hex: 0x7c2d12 }, // Molten amber
+            { pos: 0.50, hex: 0xea580c }, // Fiery orange
+            { pos: 0.75, hex: 0xfacc15 }, // Radiant gold
+            { pos: 1.00, hex: 0xffffff }  // White incandescent heat
+        ]
     },
-    cyberpunk: {
-        name: 'Cyber Prismatic',
-        tileBase: 0x4c1d95,
-        tileEdge: 0xec4899,
-        accent: 0x06b6d4,
-        shaft: 0x1e1b4b,
-        basePlate: 0x0f0923,
-        bg: 0x080415,
-        rimColor: 0xf472b6
+    domino: {
+        name: 'Domino Pearl White',
+        bg: 0x080b12,
+        rimColor: 0x94a3b8,
+        basePlate: 0x0e131f,
+        stops: [
+            { pos: 0.00, hex: 0x1e293b }, // Slate dark
+            { pos: 0.30, hex: 0x475569 }, // Cool graphite
+            { pos: 0.60, hex: 0x94a3b8 }, // Soft silver
+            { pos: 0.85, hex: 0xe2e8f0 }, // Polished ivory
+            { pos: 1.00, hex: 0xffffff }  // Pure porcelain white
+        ]
     }
 };
 
 /**
- * Creates high-resolution procedural textures for the hex tile top faces,
- * including delicate edge bevel shading and subtle radial sheen.
+ * Precomputes 256-entry lookup table for seamless 0-alloc color sampling.
  */
-function createHexFaceTexture(paletteKey = 'domino') {
-    const canvas = document.createElement('canvas');
-    canvas.width = 512;
-    canvas.height = 512;
-    const ctx = canvas.getContext('2d');
-    const w = canvas.width;
-    const h = canvas.height;
-    const cx = w / 2;
-    const cy = h / 2;
+function buildGradientLut(stops) {
+    const lut = new Array(256);
+    const parsedStops = stops.map(s => ({
+        pos: s.pos,
+        color: new THREE.Color(s.hex)
+    }));
 
-    const pal = PALETTES[paletteKey] || PALETTES.domino;
-    const baseColor = new THREE.Color(pal.tileBase).getStyle();
-    const edgeColor = new THREE.Color(pal.tileEdge).getStyle();
+    for (let i = 0; i < 256; i++) {
+        const t = i / 255.0;
+        let color = parsedStops[parsedStops.length - 1].color;
 
-    // Background fill
-    ctx.fillStyle = baseColor;
-    ctx.fillRect(0, 0, w, h);
-
-    // Subtle radial sheen from studio light
-    const sheenGrad = ctx.createRadialGradient(cx * 0.85, cy * 0.85, 20, cx, cy, w * 0.6);
-    sheenGrad.addColorStop(0, 'rgba(255, 255, 255, 0.22)');
-    sheenGrad.addColorStop(0.7, 'rgba(255, 255, 255, 0.0)');
-    sheenGrad.addColorStop(1, 'rgba(0, 0, 0, 0.12)');
-    ctx.fillStyle = sheenGrad;
-    ctx.fillRect(0, 0, w, h);
-
-    // Outer hexagon border & ambient occlusion contour
-    const hexRadius = w * 0.46;
-    ctx.beginPath();
-    for (let i = 0; i < 6; i++) {
-        const angle = (Math.PI / 3) * i - Math.PI / 6;
-        const x = cx + hexRadius * Math.cos(angle);
-        const y = cy + hexRadius * Math.sin(angle);
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
+        for (let s = 0; s < parsedStops.length - 1; s++) {
+            const s1 = parsedStops[s];
+            const s2 = parsedStops[s + 1];
+            if (t >= s1.pos && t <= s2.pos) {
+                const localT = (t - s1.pos) / (s2.pos - s1.pos);
+                color = s1.color.clone().lerp(s2.color, localT);
+                break;
+            }
+        }
+        lut[i] = color;
     }
-    ctx.closePath();
-    ctx.strokeStyle = edgeColor;
-    ctx.lineWidth = 14;
-    ctx.stroke();
-
-    // Inner subtle chamfer ring
-    const innerRadius = hexRadius * 0.88;
-    ctx.beginPath();
-    for (let i = 0; i < 6; i++) {
-        const angle = (Math.PI / 3) * i - Math.PI / 6;
-        const x = cx + innerRadius * Math.cos(angle);
-        const y = cy + innerRadius * Math.sin(angle);
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-    }
-    ctx.closePath();
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.18)';
-    ctx.lineWidth = 4;
-    ctx.stroke();
-
-    const texture = new THREE.CanvasTexture(canvas);
-    texture.wrapS = THREE.ClampToEdgeWrapping;
-    texture.wrapT = THREE.ClampToEdgeWrapping;
-    texture.generateMipmaps = true;
-    return texture;
+    return lut;
 }
 
 export class MaterialManager {
     constructor() {
-        this.currentPaletteKey = 'domino';
-        this.textures = new Map();
-        this.materials = new Map();
+        this.currentPaletteKey = 'turbo';
+        this.luts = new Map();
+
+        // Precompute LUTs for all palettes
+        for (const [key, palette] of Object.entries(GRADIENT_PALETTES)) {
+            this.luts.set(key, buildGradientLut(palette.stops));
+        }
+
         this._initMaterials();
     }
 
     _initMaterials() {
-        // Build tile physical material for current palette
-        this.updatePalette(this.currentPaletteKey);
+        // High-end shiny plastic physical material directly referenced from SUM10
+        this.pistonMaterial = new THREE.MeshPhysicalMaterial({
+            color: 0xffffff,
+            vertexColors: true,
+            roughness: 0.12,          // Highly polished melamine resin
+            metalness: 0.0,           // Non-metallic plastic
+            clearcoat: 0.98,          // Glossy mirror clearcoat
+            clearcoatRoughness: 0.05, // Crisp specular sheen
+            ior: 1.54,                // High refractive index of resin
+            reflectivity: 0.72
+        });
+
+        // Base ground plate material
+        const pal = this.getCurrentPalette();
+        this.baseMaterial = new THREE.MeshStandardMaterial({
+            color: pal.basePlate,
+            roughness: 0.55,
+            metalness: 0.25
+        });
     }
 
     /**
-     * Creates or retrieves the shiny plastic tile material.
-     * Directly matches SUM10's melamine resin & high clearcoat parameters.
+     * Samples color from the active height gradient LUT.
+     * @param {number} normalizedHeight - Value from 0.0 to 1.0
+     * @returns {THREE.Color}
      */
+    sampleHeightColor(normalizedHeight) {
+        const lut = this.luts.get(this.currentPaletteKey) || this.luts.get('turbo');
+        const idx = Math.max(0, Math.min(255, Math.floor(normalizedHeight * 255)));
+        return lut[idx];
+    }
+
     updatePalette(paletteKey) {
-        this.currentPaletteKey = paletteKey;
-        const pal = PALETTES[paletteKey] || PALETTES.domino;
-
-        if (!this.textures.has(paletteKey)) {
-            this.textures.set(paletteKey, createHexFaceTexture(paletteKey));
-        }
-        const tex = this.textures.get(paletteKey);
-
-        // Shiny plastic tile material (SUM10 specification)
-        if (!this.tileMaterial) {
-            this.tileMaterial = new THREE.MeshPhysicalMaterial({
-                map: tex,
-                color: pal.tileBase,
-                roughness: 0.12,          // Highly polished domino plastic
-                metalness: 0.0,           // Non-metallic melamine resin
-                clearcoat: 0.98,          // Glossy protective clearcoat layer
-                clearcoatRoughness: 0.05, // Mirror specular sheen
-                ior: 1.54,                // High refractive index of resin/plastic
-                reflectivity: 0.72
-            });
-        } else {
-            this.tileMaterial.map = tex;
-            this.tileMaterial.color.set(pal.tileBase);
-            this.tileMaterial.needsUpdate = true;
-        }
-
-        // Sleek machined piston shaft material
-        if (!this.shaftMaterial) {
-            this.shaftMaterial = new THREE.MeshStandardMaterial({
-                color: pal.shaft,
-                roughness: 0.28,
-                metalness: 0.85
-            });
-        } else {
-            this.shaftMaterial.color.set(pal.shaft);
-        }
-
-        // Base plate & socket ring material
-        if (!this.baseMaterial) {
-            this.baseMaterial = new THREE.MeshStandardMaterial({
-                color: pal.basePlate,
-                roughness: 0.45,
-                metalness: 0.3
-            });
-        } else {
-            this.baseMaterial.color.set(pal.basePlate);
-        }
-
-        // Socket collar ring material (dark metallic socket inside baseplate)
-        if (!this.socketMaterial) {
-            this.socketMaterial = new THREE.MeshStandardMaterial({
-                color: 0x0f172a,
-                roughness: 0.6,
-                metalness: 0.5
-            });
+        if (GRADIENT_PALETTES[paletteKey]) {
+            this.currentPaletteKey = paletteKey;
+            const pal = this.getCurrentPalette();
+            if (this.baseMaterial) {
+                this.baseMaterial.color.set(pal.basePlate);
+            }
         }
     }
 
     getCurrentPalette() {
-        return PALETTES[this.currentPaletteKey];
+        return GRADIENT_PALETTES[this.currentPaletteKey] || GRADIENT_PALETTES.turbo;
     }
 }

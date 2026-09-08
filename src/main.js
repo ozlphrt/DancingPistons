@@ -32,16 +32,16 @@ class DancingPistonsApp {
         this.materialManager = new MaterialManager();
         this.sound = new SoundEffects();
 
-        // 7 rings = 169 hexagonal pistons
+        // 24 rings = 1,801 hexagonal pistons (10X denser grid)
         this.pistonField = new PistonField(
             this.sceneManager.scene,
             this.materialManager,
             this.sound,
             {
-                hexRadius: 0.96,
-                hexGap: 0.08,
-                rings: 7,
-                cursorRadius: 3.8,
+                hexRadius: 0.42,
+                hexGap: 0.03,
+                rings: 24,
+                cursorRadius: 3.4,
                 waveHeight: 1.8,
                 motionMode: 'interactive'
             }
@@ -49,7 +49,12 @@ class DancingPistonsApp {
 
         const countElem = document.getElementById('stat-piston-count');
         if (countElem) {
-            countElem.textContent = this.pistonField.pistons.length;
+            countElem.textContent = this.pistonField.count.toLocaleString();
+        }
+
+        const paletteNameBadge = document.getElementById('current-palette-name');
+        if (paletteNameBadge) {
+            paletteNameBadge.textContent = this.materialManager.getCurrentPalette().name;
         }
 
         // Apply initial theme
@@ -205,9 +210,7 @@ class DancingPistonsApp {
         if (stiffSlider) {
             stiffSlider.addEventListener('input', (e) => {
                 const val = parseFloat(e.target.value);
-                this.pistonField.pistons.forEach(p => {
-                    p.stiffness = val;
-                });
+                this.pistonField.stiffness = val;
                 if (stiffVal) stiffVal.textContent = Math.round(val);
             });
         }
