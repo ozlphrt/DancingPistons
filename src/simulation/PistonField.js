@@ -77,7 +77,12 @@ export class PistonField {
 
         this.instancedMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
         this.instancedMesh.castShadow = true;
-        this.instancedMesh.receiveShadow = true;
+        // Initialize instance color buffer attribute explicitly
+        this.instancedMesh.instanceColor = new THREE.InstancedBufferAttribute(
+            new Float32Array(this.count * 3),
+            3
+        );
+        this.instancedMesh.instanceColor.setUsage(THREE.DynamicDrawUsage);
 
         // Pre-initialize instance matrices and colors directly in flat memory
         const matrixArray = this.instancedMesh.instanceMatrix.array;
