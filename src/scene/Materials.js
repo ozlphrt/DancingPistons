@@ -128,16 +128,19 @@ export class MaterialManager {
     }
 
     _initMaterials() {
-        // High-end shiny plastic physical material directly referenced from SUM10
+        // Shiny plastic physical material (smooth glossy resin / ABS plastic)
         this.pistonMaterial = new THREE.MeshPhysicalMaterial({
             color: 0xffffff,
             vertexColors: true,
-            roughness: 0.12,          // Highly polished melamine resin
-            metalness: 0.0,           // Non-metallic plastic
-            clearcoat: 0.98,          // Glossy mirror clearcoat
-            clearcoatRoughness: 0.05, // Crisp specular sheen
-            ior: 1.54,                // High refractive index of resin
-            reflectivity: 0.72
+            roughness: 0.22,          // Smooth glossy plastic surface (not mirror metal)
+            metalness: 0.0,           // Strictly 0.0 non-metallic dielectric
+            clearcoat: 0.48,          // Soft glossy protective plastic clearcoat
+            clearcoatRoughness: 0.18, // Diffused specular spread
+            ior: 1.48,                // Standard refractive index of molded plastic / acrylic
+            reflectivity: 0.50,       // Natural plastic reflectivity
+            sheen: 0.20,              // Subtle soft polymer sheen
+            sheenRoughness: 0.35,
+            sheenColor: new THREE.Color(0xffffff)
         });
 
         // Base ground plate material

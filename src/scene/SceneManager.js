@@ -58,16 +58,16 @@ export class SceneManager {
      * - Cool Rim light catching beveled chamfers
      */
     _initLighting() {
-        // 1. Natural Studio Hemisphere Fill Light
-        this.hemiLight = new THREE.HemisphereLight(0xf8fafc, 0xe2e8f0, 0.65);
+        // 1. Natural Studio Hemisphere Fill Light (soft sky bounce)
+        this.hemiLight = new THREE.HemisphereLight(0xffffff, 0xdfe7f2, 0.90);
         this.scene.add(this.hemiLight);
 
-        // 2. Subtle Warm Ambient Fill
-        this.ambientLight = new THREE.AmbientLight(0xfffbf5, 0.35);
+        // 2. Warm Ambient Fill for solid diffuse plastic illumination
+        this.ambientLight = new THREE.AmbientLight(0xfffdfa, 0.65);
         this.scene.add(this.ambientLight);
 
-        // 3. Warm Directional Key Light with Soft PCF Shadows
-        this.dirLight = new THREE.DirectionalLight(0xfff7ed, 1.35);
+        // 3. Directional Key Light with Soft PCF Shadows (toned down to prevent specular blowout)
+        this.dirLight = new THREE.DirectionalLight(0xfff8ee, 0.95);
         this.dirLight.position.set(18, 28, 18);
         this.dirLight.castShadow = true;
         this.dirLight.shadow.mapSize.width = 2048;
@@ -82,8 +82,8 @@ export class SceneManager {
         this.dirLight.shadow.radius = 2.4;
         this.scene.add(this.dirLight);
 
-        // 4. Secondary Cool Rim Light for Bevel Chamfer Specular Definition
-        this.rimLight = new THREE.DirectionalLight(0x93c5fd, 0.60);
+        // 4. Subtle Rim Light for gentle beveled edge gleam
+        this.rimLight = new THREE.DirectionalLight(0xdbeafe, 0.35);
         this.rimLight.position.set(-18, 16, -18);
         this.scene.add(this.rimLight);
     }

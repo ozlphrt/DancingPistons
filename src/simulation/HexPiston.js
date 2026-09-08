@@ -50,9 +50,9 @@ export function createHexPrismGeometry(radius = 0.40, height = 2.4, bevel = 0.02
         if (y >= topThreshold) {
             factor = 1.0; // Top face cap
         } else if (y >= -bevel * 3.5) {
-            factor = 0.76; // Beveled chamfer
+            factor = 0.94; // Beveled chamfer
         } else {
-            factor = 0.42; // Columnar sides
+            factor = 0.88; // Solid colorful plastic body (eliminates metallic dark shading)
         }
         colors[i * 3] = factor;
         colors[i * 3 + 1] = factor;
